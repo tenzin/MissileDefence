@@ -59,6 +59,8 @@
     <Compile Include="Game1.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="City.cs" />
+    <Compile Include="Missile.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
