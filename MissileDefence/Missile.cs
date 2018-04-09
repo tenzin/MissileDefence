@@ -14,39 +14,47 @@ namespace MissileDefence
         Vector2 velocity { get; set; }
         float rotation, deltaRotation, speed;
         bool launched { get; set; }
-        public Missile(Texture2D texture, Vector2 position)
+        int screenWidth, screenHeight;
+        public Missile(Texture2D texture, Vector2 position, int screenWidth, int screenHeight)
         {
             this.texture = texture;
             this.position = position;
-            //velocity = new Vector2(1, 2);
+            this.screenWidth = screenWidth;
+            this.screenHeight = screenHeight;
             rotation = 0;
             deltaRotation = 0.03F;
             launched = false;
-            speed = 3;
+            speed = 230;
         }
 
-        private void OutOfBounds()
+        private bool OutOfBounds()
         {
-            
+            if ((position.X < 0 || position.X > screenWidth) || (position.Y < 0 || position.Y > screenHeight))
+                return true;
+            else
+                return false;
         }
 
-        public void Update(KeyboardState keystate)
+        public void Update(KeyboardState keystate, GameTime gameTime)
         {
-            if (keystate.IsKeyDown(Keys.Up))
+            if (keystate.IsKeyDown(Keys.Up) && !launched)
             {
                 launched = true;
-                velocity = new Vector2((float)Math.Cos(rotation - Math.PI / 2), (float)Math.Sin(rotation - Math.PI / 2));
-                velocity.Normalize();
+                velocity = new Vector2((float)Math.Cos(rotation - Math.PI / 2) * speed, (float)Math.Sin(rotation - Math.PI / 2) * speed);
+                //velocity.Normalize();
             }
 
-            //if(OutOfBounds())
-            //{
-                
-            //}
+            if(OutOfBounds())
+            {
+                launched = false;
+                position = new Vector2(395, 470);
+                rotation = 0;
+            }
 
             if (launched)
             {
-                position += velocity * speed;
+                //position += velocity * speed;
+                position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
                 
             }
 
