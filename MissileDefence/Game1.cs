@@ -16,6 +16,7 @@ namespace MissileDefence.MacOS
         Texture2D landScape, launchPad;
         City city1, city2, city3, city4;
         Missile missile;
+        Enemy enemy;
         KeyboardState keyState;
 
         public Game1()
@@ -54,12 +55,13 @@ namespace MissileDefence.MacOS
             Texture2D c3 = Content.Load<Texture2D>("Images/City3");
             Texture2D c4 = Content.Load<Texture2D>("Images/City4");
             Texture2D missileTexture = Content.Load<Texture2D>("Images/Missile");
+            Texture2D enemyTexture = Content.Load<Texture2D>("Images/Threat");
             city1 = new City(c1, 100, 430);
             city2 = new City(c2, 200, 430);
             city3 = new City(c3, 500, 430);
             city4 = new City(c4, 600, 430);
-            missile = new Missile(missileTexture, new Vector2(400, 470));
-
+            missile = new Missile(missileTexture, new Vector2(395, 470), GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            enemy = new Enemy(enemyTexture, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
 
             //TODO: use this.Content to load your game content here 
         }
@@ -77,7 +79,8 @@ namespace MissileDefence.MacOS
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            missile.Update(keyState);
+            missile.Update(keyState, gameTime);
+            enemy.Update(gameTime);
 
             // TODO: Add your update logic here
 
@@ -96,13 +99,14 @@ namespace MissileDefence.MacOS
 
             spriteBatch.Begin();
             spriteBatch.Draw(landScape, new Vector2(0, GraphicsDevice.Viewport.Height - landScape.Height), Color.White);
-            spriteBatch.Draw(launchPad, new Vector2(370, 450), Color.White);
+            spriteBatch.Draw(launchPad, new Vector2(370, 460), Color.White);
             spriteBatch.End();
             city1.Draw(spriteBatch);
             city2.Draw(spriteBatch);
             city3.Draw(spriteBatch);
             city4.Draw(spriteBatch);
             missile.Draw(spriteBatch);
+            enemy.Draw(spriteBatch);
 
             base.Draw(gameTime);
         }
