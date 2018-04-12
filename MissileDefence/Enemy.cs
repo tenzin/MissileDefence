@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,33 +7,40 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MissileDefence
 {
-    public class Enemy
+    public class Enemy : GameObject
     {
-        Texture2D texture;
-        Vector2 position;
         Vector2 velocity;
-        float rotation, speed;
-        int screenWidth, screenHeight;
+        float rotation;
+        float speed;
         Random random;
-        public Enemy(Texture2D texture, int screenWidth, int screenHeight)
+        public bool collision;
+        bool enableBoundingBox;
+        bool fired;
+        float timer;
+
+
+        public Enemy(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
-            this.texture = texture;
-            this.screenWidth = screenWidth;
-            this.screenHeight = screenHeight;
             random = new Random();
-            GeneratePositionVelocityRotationSpeed();
+            collision = false;
+            enableBoundingBox = false;
+            Reset();
+            fired = false;
+            timer = 0;
         }
 
-        private void GeneratePositionVelocityRotationSpeed()
+        private void Reset()
         {
-            position.X = random.Next(0, screenWidth);
-            position.Y = 0;
-            rotation = (float)random.NextDouble() * (float)(Math.PI / 2) - (float)Math.PI / 4;
+            position.X = random.Next(20, 800 - 20); //Enemy's position.X.
+            position.Y = 0; 
+            fired = false;
+            timer = 0;
+            rotation = (float)random.NextDouble() * (float)(3 * Math.PI / 4 - Math.PI / 4) + (float)Math.PI / 4; //Random rotation of 45degrees left or right wrt y axis
             speed = random.Next(45, 90);
-            velocity = new Vector2((float)Math.Cos(rotation + Math.PI / 2) * speed, (float)Math.Sin(rotation + Math.PI / 2) * speed);
+            velocity = new Vector2((float)Math.Cos(rotation) * speed, (float)Math.Sin(rotation) * speed);
         }
 
-        private bool OutOfBounds()
+        private bool OutOfBounds(float screenWidth, float screenHeight)
         {
             if ((position.X < 0 || position.X > screenWidth) || (position.Y < 0 || position.Y > screenHeight))
                 return true;
@@ -40,19 +48,50 @@ namespace MissileDefence
                 return false;
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(KeyboardState keystate, GameTime gameTime, GraphicsDevice graphicsDevice)
         {
-            if(OutOfBounds())
-                GeneratePositionVelocityRotationSpeed();
-            else
-                position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
+            if(fired)
+            {
+                if (keystate.IsKeyDown(Keys.B))
+                {
+                    enableBoundingBox = !enableBoundingBox;
+                }
+
+                if (OutOfBounds(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height) || collision)
+                {
+                    Reset();
+                    collision = false;
+                }
+
+                else
+                    position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
+            }
+
+            else //Not fired ... do the timer thing
+            {
+                timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (timer > 5)
+                    fired = true;
+            }
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
-            spriteBatch.Begin();
-            spriteBatch.Draw(texture, position, null, Color.White, rotation, new Vector2(texture.Width / 2, texture.Height), 1, SpriteEffects.None, 0);
-            spriteBatch.End();
+            if(fired)
+            {
+                spriteBatch.Draw(texture, position, null, Color.White, rotation, hotspot, 1, SpriteEffects.None, 0);
+                //if (collision)
+                //{
+                //    spriteBatch.DrawString(font, "Collision!!!!", new Vector2(150, 150), Color.Red);
+                //}
+                if (enableBoundingBox)
+                {
+                    DrawBoundingBox(spriteBatch);
+                    DrawHotSpot(spriteBatch);
+                }
+            }
+            else
+                spriteBatch.DrawString(font, "THREAT APPEARING IN " + (5 - (int)timer) + " SECONDS!", new Vector2(300, 10), Color.Red);
         }
     }
 }

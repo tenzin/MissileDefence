@@ -6,23 +6,50 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MissileDefence
 {
-    public class City
+    public class City : GameObject
     {
-        Texture2D texture { get; set; }
-        float positionX { get; set; }
-        float positionY { get; set; }
-        public City(Texture2D texture, float positionX, float positionY)
+        public bool collision;
+        bool enableBoundingBox;
+        bool alive;
+
+        int strength;
+
+        public City(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
-            this.texture = texture;
-            this.positionX = positionX;
-            this.positionY = positionY;
+            collision = false;
+            enableBoundingBox = false;
+            strength = 10;
+            alive = true;
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Update(KeyboardState keystate, GameTime gameTime, GraphicsDevice graphicsDevice)
         {
-            spriteBatch.Begin();
-            spriteBatch.Draw(texture, new Vector2(positionX, positionY), Color.White);
-            spriteBatch.End();
+            if (keystate.IsKeyDown(Keys.B))
+            {
+                enableBoundingBox = !enableBoundingBox;
+            }
+            if(collision)
+            {
+                strength--;
+                if (strength < 1)
+                    alive = false;
+
+                collision = false;
+            }
+        }
+
+        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
+        {
+            if(alive)
+            {
+                spriteBatch.Draw(texture, position, Color.White);
+                if (enableBoundingBox)
+                {
+                    DrawBoundingBox(spriteBatch);
+                    DrawHotSpot(spriteBatch);
+                }
+                spriteBatch.DrawString(font, "LIFE: " + strength, new Vector2(position.X, position.Y - 15) , Color.White);
+            }
         }
     }
 }

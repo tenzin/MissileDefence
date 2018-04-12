@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MissileDefence.MacOS
 {
+    //Static class to define a Global variable
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -13,11 +15,13 @@ namespace MissileDefence.MacOS
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Texture2D landScape, launchPad;
-        City city1, city2, city3, city4;
+
+        Texture2D backGround;
+        List<City> cities;
         Missile missile;
         Enemy enemy;
         KeyboardState keyState;
+        SpriteFont font;
 
         public Game1()
         {
@@ -48,20 +52,30 @@ namespace MissileDefence.MacOS
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            landScape = Content.Load<Texture2D>("Images/LandScape");
-            launchPad = Content.Load<Texture2D>("Images/LaunchPad");
+
+            //Create pixel texture
+            Globals.pixel = new Texture2D(this.GraphicsDevice, 1, 1);
+            Color[] colourData = new Color[1];
+            colourData[0] = Color.White; //The Colour of the rectangle
+            Globals.pixel.SetData<Color>(colourData);
+
+            backGround = Content.Load<Texture2D>("Images/BackGround");
+
             Texture2D c1 = Content.Load<Texture2D>("Images/City1");
             Texture2D c2 = Content.Load<Texture2D>("Images/City2");
             Texture2D c3 = Content.Load<Texture2D>("Images/City3");
             Texture2D c4 = Content.Load<Texture2D>("Images/City4");
             Texture2D missileTexture = Content.Load<Texture2D>("Images/Missile");
             Texture2D enemyTexture = Content.Load<Texture2D>("Images/Threat");
-            city1 = new City(c1, 100, 430);
-            city2 = new City(c2, 200, 430);
-            city3 = new City(c3, 500, 430);
-            city4 = new City(c4, 600, 430);
-            missile = new Missile(missileTexture, new Vector2(395, 470), GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
-            enemy = new Enemy(enemyTexture, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            font = Content.Load<SpriteFont>("Fonts/Font");
+
+            cities = new List<City>();
+            cities.Add(new City(c1, new Vector2(100, 430), new Vector2(0, 0)));
+            cities.Add(new City(c2, new Vector2(200, 430), new Vector2(0, 0)));
+            cities.Add(new City(c3, new Vector2(500, 430), new Vector2(0, 0)));
+            cities.Add(new City(c4, new Vector2(600, 430), new Vector2(0, 0)));
+            missile = new Missile(missileTexture, new Vector2(395, 445), new Vector2(missileTexture.Width / 2, missileTexture.Height / 2));
+            enemy = new Enemy(enemyTexture, new Vector2(1, 1), new Vector2(enemyTexture.Width / 2, enemyTexture.Height / 2));
 
             //TODO: use this.Content to load your game content here 
         }
@@ -79,8 +93,14 @@ namespace MissileDefence.MacOS
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            missile.Update(keyState, gameTime);
-            enemy.Update(gameTime);
+            //Update cities
+            foreach (City city in cities)
+                city.Update(keyState, gameTime, GraphicsDevice);
+
+            //update missile and enemy rocket
+            missile.Update(keyState, gameTime, GraphicsDevice);
+            enemy.Update(keyState, gameTime, GraphicsDevice);
+            CollisionDetection();
 
             // TODO: Add your update logic here
 
@@ -98,17 +118,36 @@ namespace MissileDefence.MacOS
             //TODO: Add your drawing code here
 
             spriteBatch.Begin();
-            spriteBatch.Draw(landScape, new Vector2(0, GraphicsDevice.Viewport.Height - landScape.Height), Color.White);
-            spriteBatch.Draw(launchPad, new Vector2(370, 460), Color.White);
+
+            spriteBatch.Draw(backGround, new Vector2(0, 0), Color.White);
+            foreach(City city in cities)
+            {
+                city.Draw(spriteBatch, font);
+            }
+            missile.Draw(spriteBatch, font);
+            enemy.Draw(spriteBatch, font);
+
             spriteBatch.End();
-            city1.Draw(spriteBatch);
-            city2.Draw(spriteBatch);
-            city3.Draw(spriteBatch);
-            city4.Draw(spriteBatch);
-            missile.Draw(spriteBatch);
-            enemy.Draw(spriteBatch);
 
             base.Draw(gameTime);
+        }
+
+        private void CollisionDetection()
+        {
+            foreach(City city in cities)
+            {
+                if(enemy.BoundingBox.Intersects(city.BoundingBox))
+                {
+                    city.collision = true;
+                    enemy.collision = true;
+                    break;
+                }
+            }
+            if(enemy.BoundingBox.Intersects(missile.BoundingBox))
+            {
+                enemy.collision = true;
+                missile.collision = true;
+            }
         }
     }
 }

@@ -6,37 +6,44 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MissileDefence
 {
-    public class Missile
+    public class Missile : GameObject
     {
+        Vector2 velocity;
+        float rotation;
+        float deltaRotation;
+        float speed;
+        bool launched;
+        public bool collision;
+        bool enableBoundingBox;
+        int score;
 
-        Texture2D texture { get; set; }
-        Vector2 position { get; set; }
-        Vector2 velocity { get; set; }
-        float rotation, deltaRotation, speed;
-        bool launched { get; set; }
-        int screenWidth, screenHeight;
-        public Missile(Texture2D texture, Vector2 position, int screenWidth, int screenHeight)
+        public Missile(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
-            this.texture = texture;
-            this.position = position;
-            this.screenWidth = screenWidth;
-            this.screenHeight = screenHeight;
             rotation = 0;
-            deltaRotation = 0.03F;
-            launched = false;
+            deltaRotation = 0.035F; //2 degrees
             speed = 230;
+            launched = false;
+            collision = false;
+            enableBoundingBox = false;
+            score = 0;
         }
 
-        private bool OutOfBounds()
+        private bool OutOfBounds(GraphicsDevice graphicsDevice)
         {
-            if ((position.X < 0 || position.X > screenWidth) || (position.Y < 0 || position.Y > screenHeight))
+
+            if ((position.X < 0 || position.X > graphicsDevice.Viewport.Width) || (position.Y < 0 || position.Y > graphicsDevice.Viewport.Height))
                 return true;
             else
                 return false;
         }
 
-        public void Update(KeyboardState keystate, GameTime gameTime)
+        public void Update(KeyboardState keystate, GameTime gameTime, GraphicsDevice graphicsDevice)
         {
+            if (keystate.IsKeyDown(Keys.B))
+            {
+                enableBoundingBox = !enableBoundingBox;
+            }
+
             if (keystate.IsKeyDown(Keys.Up) && !launched)
             {
                 launched = true;
@@ -44,37 +51,39 @@ namespace MissileDefence
                 //velocity.Normalize();
             }
 
-            if(OutOfBounds())
-            {
-                launched = false;
-                position = new Vector2(395, 470);
-                rotation = 0;
-            }
-
-            if (launched)
+            if (launched) //missile fired
             {
                 //position += velocity * speed;
                 position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
-                
+
+                if (OutOfBounds(graphicsDevice) || collision)
+                {
+                    launched = false;
+                    position = new Vector2(395, 445);
+                    rotation = 0;
+                    score++;
+                    collision = false;
+                }
             }
 
-            else //Missile not fired
+            else //Missile not fired. Can rotate missile with Left & Right Key upto 45 degrees to both side
             {
-                if (keystate.IsKeyDown(Keys.Left) && rotation > -(float)Math.PI / 4)
+                if (keystate.IsKeyDown(Keys.Left) && rotation > - (float)Math.PI / 4)
                     rotation -= deltaRotation;
                 else if (keystate.IsKeyDown(Keys.Right) && rotation < (float)Math.PI / 4)
                     rotation += deltaRotation;
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
-            spriteBatch.Begin();
-            //if (launched)
-            //    spriteBatch.Draw(texture, position, Color.White);
-            //else
-                spriteBatch.Draw(texture, position, null, Color.White, rotation, new Vector2(texture.Width / 2, texture.Height), 1, SpriteEffects.None, 0);
-            spriteBatch.End();
+            spriteBatch.Draw(texture, position, null, Color.White, rotation, hotspot, 1, SpriteEffects.None, 0);
+            spriteBatch.DrawString(font, "SCORE: " + score, new Vector2(375, 385), Color.Green);
+            if (enableBoundingBox)
+            {
+                DrawBoundingBox(spriteBatch);
+                DrawHotSpot(spriteBatch);
+            }
         }
     }
 }
