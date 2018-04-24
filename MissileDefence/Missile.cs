@@ -58,10 +58,11 @@ namespace MissileDefence
 
                 if (OutOfBounds(graphicsDevice) || collision)
                 {
+                    if (collision)
+                        score++;
                     launched = false;
                     position = new Vector2(395, 445);
                     rotation = 0;
-                    score++;
                     collision = false;
                 }
             }

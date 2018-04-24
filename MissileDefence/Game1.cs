@@ -18,8 +18,8 @@ namespace MissileDefence.MacOS
 
         Texture2D backGround;
         List<City> cities;
+        List<Enemy> enemies;
         Missile missile;
-        Enemy enemy;
         KeyboardState keyState;
         SpriteFont font;
 
@@ -67,6 +67,8 @@ namespace MissileDefence.MacOS
             Texture2D c4 = Content.Load<Texture2D>("Images/City4");
             Texture2D missileTexture = Content.Load<Texture2D>("Images/Missile");
             Texture2D enemyTexture = Content.Load<Texture2D>("Images/Threat");
+            Texture2D enemyTexture2 = Content.Load<Texture2D>("Images/Threat2");
+            Texture2D enemyTexture3 = Content.Load<Texture2D>("Images/Threat3");
             font = Content.Load<SpriteFont>("Fonts/Font");
 
             cities = new List<City>();
@@ -74,8 +76,14 @@ namespace MissileDefence.MacOS
             cities.Add(new City(c2, new Vector2(200, 430), new Vector2(0, 0)));
             cities.Add(new City(c3, new Vector2(500, 430), new Vector2(0, 0)));
             cities.Add(new City(c4, new Vector2(600, 430), new Vector2(0, 0)));
+
             missile = new Missile(missileTexture, new Vector2(395, 445), new Vector2(missileTexture.Width / 2, missileTexture.Height / 2));
-            enemy = new Enemy(enemyTexture, new Vector2(1, 1), new Vector2(enemyTexture.Width / 2, enemyTexture.Height / 2));
+
+            enemies = new List<Enemy>();
+
+            enemies.Add(new Enemy(enemyTexture3, new Vector2(1, 1), new Vector2(enemyTexture3.Width / 2, enemyTexture3.Height / 2), 1));
+            enemies.Add(new Enemy(enemyTexture2, new Vector2(1, 1), new Vector2(enemyTexture2.Width / 2, enemyTexture2.Height / 2), 4900));
+            enemies.Add(new Enemy(enemyTexture, new Vector2(1, 1), new Vector2(enemyTexture.Width / 2, enemyTexture.Height / 2), 345609));
 
             //TODO: use this.Content to load your game content here 
         }
@@ -99,7 +107,9 @@ namespace MissileDefence.MacOS
 
             //update missile and enemy rocket
             missile.Update(keyState, gameTime, GraphicsDevice);
-            enemy.Update(keyState, gameTime, GraphicsDevice);
+            foreach (Enemy enemy in enemies)
+                enemy.Update(keyState, gameTime, GraphicsDevice);
+
             CollisionDetection();
 
             // TODO: Add your update logic here
@@ -125,7 +135,11 @@ namespace MissileDefence.MacOS
                 city.Draw(spriteBatch, font);
             }
             missile.Draw(spriteBatch, font);
-            enemy.Draw(spriteBatch, font);
+
+            foreach(Enemy enemy in enemies)
+                enemy.Draw(spriteBatch, font);
+
+            spriteBatch.DrawString(font, "Number of enemies" + enemies.Count, new Vector2(300, 300), Color.Red);
 
             spriteBatch.End();
 
@@ -134,19 +148,23 @@ namespace MissileDefence.MacOS
 
         private void CollisionDetection()
         {
-            foreach(City city in cities)
+
+            foreach(Enemy enemy in enemies)
             {
-                if(enemy.BoundingBox.Intersects(city.BoundingBox))
+                if (enemy.BoundingBox.Intersects(missile.BoundingBox))
                 {
-                    city.collision = true;
                     enemy.collision = true;
-                    break;
+                    missile.collision = true;
                 }
-            }
-            if(enemy.BoundingBox.Intersects(missile.BoundingBox))
-            {
-                enemy.collision = true;
-                missile.collision = true;
+                foreach(City city in cities)
+                {
+                    if (enemy.BoundingBox.Intersects(city.BoundingBox))
+                    {
+                        city.collision = true;
+                        enemy.collision = true;
+                        break;
+                    }
+                }
             }
         }
     }

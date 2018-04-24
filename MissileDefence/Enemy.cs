@@ -19,9 +19,9 @@ namespace MissileDefence
         float timer;
 
 
-        public Enemy(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
+        public Enemy(Texture2D texture, Vector2 position, Vector2 hotspot, int salt) : base(texture, position, hotspot)
         {
-            random = new Random();
+            random = new Random(salt);
             collision = false;
             enableBoundingBox = false;
             Reset();
@@ -36,7 +36,7 @@ namespace MissileDefence
             fired = false;
             timer = 0;
             rotation = (float)random.NextDouble() * (float)(3 * Math.PI / 4 - Math.PI / 4) + (float)Math.PI / 4; //Random rotation of 45degrees left or right wrt y axis
-            speed = random.Next(45, 90);
+            speed = random.Next(60, 120);
             velocity = new Vector2((float)Math.Cos(rotation) * speed, (float)Math.Sin(rotation) * speed);
         }
 
@@ -70,7 +70,7 @@ namespace MissileDefence
             else //Not fired ... do the timer thing
             {
                 timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (timer > 5)
+                if (timer > 2)
                     fired = true;
             }
         }
@@ -80,18 +80,14 @@ namespace MissileDefence
             if(fired)
             {
                 spriteBatch.Draw(texture, position, null, Color.White, rotation, hotspot, 1, SpriteEffects.None, 0);
-                //if (collision)
-                //{
-                //    spriteBatch.DrawString(font, "Collision!!!!", new Vector2(150, 150), Color.Red);
-                //}
                 if (enableBoundingBox)
                 {
                     DrawBoundingBox(spriteBatch);
                     DrawHotSpot(spriteBatch);
                 }
             }
-            else
-                spriteBatch.DrawString(font, "THREAT APPEARING IN " + (5 - (int)timer) + " SECONDS!", new Vector2(300, 10), Color.Red);
+            //else
+                //spriteBatch.DrawString(font, "THREAT APPEARING IN " + (5 - (int)timer) + " SECONDS!", new Vector2(300, 10), Color.Red);
         }
     }
 }
