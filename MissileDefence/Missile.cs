@@ -16,7 +16,6 @@ namespace MissileDefence
         public bool collision;
         bool enableBoundingBox;
         int score;
-        //Rect4 rect4;
 
         public Missile(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
@@ -27,7 +26,6 @@ namespace MissileDefence
             collision = false;
             enableBoundingBox = false;
             score = 0;
-
         }
 
         private bool OutOfBounds(GraphicsDevice graphicsDevice)
@@ -76,8 +74,7 @@ namespace MissileDefence
                     rotation += deltaRotation;
             }
 
-            //rect4 = new Rect4(BoundingBox);
-            //rect4.rotateRect(hotspot, rotation);
+
         }
 
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -88,9 +85,7 @@ namespace MissileDefence
             {
                 DrawBoundingBox(spriteBatch);
                 DrawHotSpot(spriteBatch);
-                //spriteBatch.Draw(Globals.pixel, rect4.getAABoundingRect(), Color.White);
             }
-
         }
     }
 }
