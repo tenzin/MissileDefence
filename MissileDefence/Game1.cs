@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Audio;
 
 namespace MissileDefence.MacOS
 {
@@ -31,6 +32,9 @@ namespace MissileDefence.MacOS
         Texture2D lose;
         List<City> cities;
         List<Enemy> enemies;
+        List<ExplosionSprite> explosionAnimations;
+        List<ExplosionSprite> expiredExplosions;
+        Texture2D explosionSprite;
         Missile missile;
         KeyboardState keyState;
         SpriteFont font;
@@ -38,6 +42,8 @@ namespace MissileDefence.MacOS
         float timer;
         bool enemyStarted;
         int citiesDestroyedCount;
+
+        SoundEffect explosion;
 
         public Game1()
         {
@@ -47,6 +53,8 @@ namespace MissileDefence.MacOS
             timer = 3;
             enemyStarted = false;
             citiesDestroyedCount = 0;
+            explosionAnimations = new List<ExplosionSprite>();
+            expiredExplosions = new List<ExplosionSprite>();
         }
 
         /// <summary>
@@ -84,6 +92,7 @@ namespace MissileDefence.MacOS
             backGround = Content.Load<Texture2D>("Images/BackGround");
             win = Content.Load<Texture2D>("Images/Win");
             lose = Content.Load<Texture2D>("Images/Lose");
+            explosionSprite = Content.Load<Texture2D>("Images/Explosion");
 
             Texture2D c1 = Content.Load<Texture2D>("Images/City1");
             Texture2D c2 = Content.Load<Texture2D>("Images/City2");
@@ -94,6 +103,7 @@ namespace MissileDefence.MacOS
             Texture2D enemyTexture2 = Content.Load<Texture2D>("Images/Threat2");
             Texture2D enemyTexture3 = Content.Load<Texture2D>("Images/Threat3");
             font = Content.Load<SpriteFont>("Fonts/Font");
+            explosion = Content.Load<SoundEffect>("Sound/Explosion");
 
             cities = new List<City>();
             cities.Add(new City(c1, new Vector2(100, 430), new Vector2(0, 0)));
@@ -149,6 +159,21 @@ namespace MissileDefence.MacOS
                 foreach (Enemy enemy in enemies)
                     enemy.Update(keyState, gameTime, GraphicsDevice);
 
+                //Update any explosions and remove them if they are expired
+                foreach (ExplosionSprite exp in explosionAnimations)
+                {
+                    if (exp.endAnimation)
+                        expiredExplosions.Add(exp);
+                    else
+                        exp.Update();
+                }
+                //Clear the epired explosions
+                foreach (ExplosionSprite exp in expiredExplosions)
+                {
+                    explosionAnimations.Remove(exp);
+                }
+                expiredExplosions.Clear();
+
                 if(enemyStarted)
                     CollisionDetection();
 
@@ -203,6 +228,9 @@ namespace MissileDefence.MacOS
                     foreach (Enemy enemy in enemies)
                         enemy.Draw(spriteBatch, font);
                 }
+
+                foreach (ExplosionSprite exp in explosionAnimations)
+                    exp.Draw(spriteBatch);
             }
 
             if (gameState == GameState.Win) //Game won. Draw win screen
@@ -236,8 +264,11 @@ namespace MissileDefence.MacOS
                 {
                     if (enemy.BoundingBox.Intersects(missile.BoundingBox))
                     {
+                        explosionAnimations.Add(new ExplosionSprite(explosionSprite, enemy.position));
                         enemy.collision = true;
                         missile.collision = true;
+                        explosion.Play();
+
                     }
                 }
 
@@ -248,8 +279,10 @@ namespace MissileDefence.MacOS
                     {
                         if (enemy.BoundingBox.Intersects(city.BoundingBox))
                         {
+                            explosionAnimations.Add(new ExplosionSprite(explosionSprite, enemy.position));
                             city.collision = true;
                             enemy.collision = true;
+                            explosion.Play();
                             break;
                         }
                     }

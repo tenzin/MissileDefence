@@ -80,6 +80,18 @@
 /processorParam:TextureFormat=Color
 /build:Images/City4.png
 
+#begin Images/Explosion.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Images/Explosion.png
+
 #begin Images/GameMenu.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -199,4 +211,10 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Images/Win.png
+
+#begin Sound/Explosion.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sound/Explosion.wav
 
