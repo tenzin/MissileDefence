@@ -12,10 +12,11 @@ namespace MissileDefence
         float rotation;
         float deltaRotation;
         float speed;
-        bool launched;
         public bool collision;
         bool enableBoundingBox;
-        int score;
+        public int score;
+        public int numberOfMissilesFired;
+        public bool launched;
 
         public Missile(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
@@ -26,6 +27,7 @@ namespace MissileDefence
             collision = false;
             enableBoundingBox = false;
             score = 0;
+            numberOfMissilesFired = 0;
         }
 
         private bool OutOfBounds(GraphicsDevice graphicsDevice)
@@ -47,6 +49,7 @@ namespace MissileDefence
             if (keystate.IsKeyDown(Keys.Up) && !launched)
             {
                 launched = true;
+                numberOfMissilesFired++;
                 velocity = new Vector2((float)Math.Cos(rotation - Math.PI / 2) * speed, (float)Math.Sin(rotation - Math.PI / 2) * speed);
                 //velocity.Normalize();
             }
@@ -81,7 +84,8 @@ namespace MissileDefence
         public void Draw(SpriteBatch spriteBatch, SpriteFont font)
         {
             spriteBatch.Draw(texture, position, null, Color.White, rotation, hotspot, 1, SpriteEffects.None, 0);
-            spriteBatch.DrawString(font, "SCORE: " + score, new Vector2(375, 385), Color.Green);
+            spriteBatch.DrawString(font, "Defensive Missiles Fired: " + numberOfMissilesFired, new Vector2(10, 10), Color.Azure);
+            spriteBatch.DrawString(font, "Enemy Missiles Intercepted: " + score, new Vector2(10, 30), Color.Azure);
             if (enableBoundingBox)
             {
                 DrawBoundingBox(spriteBatch);

@@ -10,31 +10,34 @@ namespace MissileDefence
     {
         public bool collision;
         bool enableBoundingBox;
-        bool alive;
+        public bool alive;
 
-        int strength;
+        int life;
 
         public City(Texture2D texture, Vector2 position, Vector2 hotspot) : base(texture, position, hotspot)
         {
             collision = false;
             enableBoundingBox = false;
-            strength = 10;
+            life = 5;
             alive = true;
         }
 
         public void Update(KeyboardState keystate, GameTime gameTime, GraphicsDevice graphicsDevice)
         {
-            if (keystate.IsKeyDown(Keys.B))
+            if(alive)
             {
-                enableBoundingBox = !enableBoundingBox;
-            }
-            if(collision)
-            {
-                strength--;
-                if (strength < 1)
-                    alive = false;
+                if (keystate.IsKeyDown(Keys.B))
+                {
+                    enableBoundingBox = !enableBoundingBox;
+                }
+                if (collision)
+                {
+                    life--;
+                    if (life < 1)
+                        alive = false;
 
-                collision = false;
+                    collision = false;
+                }
             }
         }
 
@@ -48,7 +51,7 @@ namespace MissileDefence
                     DrawBoundingBox(spriteBatch);
                     DrawHotSpot(spriteBatch);
                 }
-                spriteBatch.DrawString(font, "LIFE: " + strength, new Vector2(position.X, position.Y - 15) , Color.White);
+                spriteBatch.DrawString(font, "LIFE: " + life, new Vector2(position.X, position.Y - 15) , Color.White);
             }
         }
     }

@@ -7,6 +7,15 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MissileDefence.MacOS
 {
+    public enum GameState 
+    {
+        Menu,
+        GamePlay,
+        Win,
+        Lose,
+        Credit
+    }
+
     //Static class to define a Global variable
     /// <summary>
     /// This is the main type for your game.
@@ -17,16 +26,27 @@ namespace MissileDefence.MacOS
         SpriteBatch spriteBatch;
 
         Texture2D backGround;
+        Texture2D gameMenu;
+        Texture2D win;
+        Texture2D lose;
         List<City> cities;
         List<Enemy> enemies;
         Missile missile;
         KeyboardState keyState;
         SpriteFont font;
+        GameState gameState;
+        float timer;
+        bool enemyStarted;
+        int citiesDestroyedCount;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            gameState = new GameState();
+            timer = 3;
+            enemyStarted = false;
+            citiesDestroyedCount = 0;
         }
 
         /// <summary>
@@ -40,6 +60,7 @@ namespace MissileDefence.MacOS
             // TODO: Add your initialization logic here
 
             keyState = Keyboard.GetState();
+            gameState = GameState.Menu;
 
             base.Initialize();
         }
@@ -59,7 +80,10 @@ namespace MissileDefence.MacOS
             colourData[0] = Color.White; //The Colour of the rectangle
             Globals.pixel.SetData<Color>(colourData);
 
+            gameMenu = Content.Load<Texture2D>("Images/GameMenu");
             backGround = Content.Load<Texture2D>("Images/BackGround");
+            win = Content.Load<Texture2D>("Images/Win");
+            lose = Content.Load<Texture2D>("Images/Lose");
 
             Texture2D c1 = Content.Load<Texture2D>("Images/City1");
             Texture2D c2 = Content.Load<Texture2D>("Images/City2");
@@ -101,16 +125,41 @@ namespace MissileDefence.MacOS
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            //Update cities
-            foreach (City city in cities)
-                city.Update(keyState, gameTime, GraphicsDevice);
+            if(gameState == GameState.Menu)
+            {
+                if (keyState.IsKeyDown(Keys.P))
+                    gameState = GameState.GamePlay;
+            }
 
-            //update missile and enemy rocket
-            missile.Update(keyState, gameTime, GraphicsDevice);
-            foreach (Enemy enemy in enemies)
-                enemy.Update(keyState, gameTime, GraphicsDevice);
+            if(gameState == GameState.GamePlay)
+            {
+                if(enemyStarted == false) //enemy not started at the beginning of game. Do the first timer and text thing
+                {
+                    timer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (timer <= 0)
+                        enemyStarted = true;
+                } 
+                    
+                //Update cities
+                foreach (City city in cities)
+                    city.Update(keyState, gameTime, GraphicsDevice);
 
-            CollisionDetection();
+                //update missile and enemy rocket
+                missile.Update(keyState, gameTime, GraphicsDevice);
+                foreach (Enemy enemy in enemies)
+                    enemy.Update(keyState, gameTime, GraphicsDevice);
+
+                if(enemyStarted)
+                    CollisionDetection();
+
+                if (AnyTwoCityDestroyed())
+                    gameState = GameState.Lose;
+
+                if (AllEnemySpent())
+                    gameState = GameState.Win;
+            }
+
+            //Check if all cities are destroyed, if true, you have lost
 
             // TODO: Add your update logic here
 
@@ -129,17 +178,48 @@ namespace MissileDefence.MacOS
 
             spriteBatch.Begin();
 
-            spriteBatch.Draw(backGround, new Vector2(0, 0), Color.White);
-            foreach(City city in cities)
+            if (gameState == GameState.Menu) //Menu
             {
-                city.Draw(spriteBatch, font);
+                //GraphicsDevice.Clear(Color.Bisque);
+                spriteBatch.Draw(gameMenu, new Vector2(0, 0), Color.White);
             }
-            missile.Draw(spriteBatch, font);
 
-            foreach(Enemy enemy in enemies)
-                enemy.Draw(spriteBatch, font);
+            if(gameState == GameState.GamePlay) //In play
+            {
+                spriteBatch.Draw(backGround, new Vector2(0, 0), Color.White);
+                foreach (City city in cities)
+                {
+                    city.Draw(spriteBatch, font);
+                }
+                missile.Draw(spriteBatch, font);
 
-            spriteBatch.DrawString(font, "Number of enemies" + enemies.Count, new Vector2(300, 300), Color.Red);
+                if(!enemyStarted)
+                {
+                    spriteBatch.DrawString(font, "Protect your Cities!", new Vector2(250, 50), Color.Red);
+                    spriteBatch.DrawString(font, "Enemy Missiles appearing in " + (int)timer + " seconds!!!!", new Vector2(240, 75), Color.Red);
+                }
+                else 
+                {
+                    foreach (Enemy enemy in enemies)
+                        enemy.Draw(spriteBatch, font);
+                }
+            }
+
+            if (gameState == GameState.Win) //Game won. Draw win screen
+            {
+                spriteBatch.Draw(win, new Vector2(0, 0), Color.White);
+                spriteBatch.DrawString(font, "Defence Missiles Fired: " + missile.numberOfMissilesFired, new Vector2(500, 100), Color.White);
+                spriteBatch.DrawString(font, "Enemy Missiles Intercepted: " + missile.score, new Vector2(500, 130), Color.White);
+                spriteBatch.DrawString(font, "Cities Destroyed: " + citiesDestroyedCount, new Vector2(500, 160), Color.White);
+            }
+
+            if (gameState == GameState.Lose) // Game Lost. Draw lost screen
+            {
+                spriteBatch.Draw(lose, new Vector2(0, 0), Color.White);
+                spriteBatch.DrawString(font, "Defence Missiles Fired: " + missile.numberOfMissilesFired, new Vector2(500, 100), Color.White);
+                spriteBatch.DrawString(font, "Enemy Missiles Intercepted: " + missile.score, new Vector2(500, 130), Color.White);
+                spriteBatch.DrawString(font, "Cities Destroyed: " + citiesDestroyedCount, new Vector2(500, 160), Color.White);
+            }
 
             spriteBatch.End();
 
@@ -151,21 +231,55 @@ namespace MissileDefence.MacOS
 
             foreach(Enemy enemy in enemies)
             {
-                if (enemy.BoundingBox.Intersects(missile.BoundingBox))
+                //Look for collision between enemy and defensive missile only if the defensive missile is fired
+                if(missile.launched)
                 {
-                    enemy.collision = true;
-                    missile.collision = true;
-                }
-                foreach(City city in cities)
-                {
-                    if (enemy.BoundingBox.Intersects(city.BoundingBox))
+                    if (enemy.BoundingBox.Intersects(missile.BoundingBox))
                     {
-                        city.collision = true;
                         enemy.collision = true;
-                        break;
+                        missile.collision = true;
                     }
                 }
+
+                foreach(City city in cities)
+                {
+                    //Look for collision between enemy and city only if the city is still alive
+                    if(city.alive)
+                    {
+                        if (enemy.BoundingBox.Intersects(city.BoundingBox))
+                        {
+                            city.collision = true;
+                            enemy.collision = true;
+                            break;
+                        }
+                    }
+
+                }
             }
+        }
+
+        private bool AnyTwoCityDestroyed()
+        {
+            citiesDestroyedCount = 0;
+            foreach (City city in cities)
+            {
+                if (!city.alive)
+                    citiesDestroyedCount++;
+            }
+            if (citiesDestroyedCount >= 2)
+                return true;
+            else
+                return false;
+        }
+
+        private bool AllEnemySpent()
+        {
+            foreach(Enemy enemy in enemies)
+            {
+                if (enemy.active)
+                    return false;
+            }
+            return true;
         }
     }
 }

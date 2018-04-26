@@ -17,16 +17,22 @@ namespace MissileDefence
         bool enableBoundingBox;
         bool fired;
         float timer;
+        int seed;
+        int rounds;
+        public bool active;
 
 
-        public Enemy(Texture2D texture, Vector2 position, Vector2 hotspot, int salt) : base(texture, position, hotspot)
+        public Enemy(Texture2D texture, Vector2 position, Vector2 hotspot, int seed) : base(texture, position, hotspot)
         {
-            random = new Random(salt);
+            this.seed = seed;
+            random = new Random(seed + (int)DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
             collision = false;
             enableBoundingBox = false;
             Reset();
             fired = false;
             timer = 0;
+            rounds = 15;
+            active = true;
         }
 
         private void Reset()
@@ -36,42 +42,54 @@ namespace MissileDefence
             fired = false;
             timer = 0;
             rotation = (float)random.NextDouble() * (float)(3 * Math.PI / 4 - Math.PI / 4) + (float)Math.PI / 4; //Random rotation of 45degrees left or right wrt y axis
-            speed = random.Next(60, 120);
+            speed = random.Next(180, 220);
             velocity = new Vector2((float)Math.Cos(rotation) * speed, (float)Math.Sin(rotation) * speed);
         }
 
         private bool OutOfBounds(float screenWidth, float screenHeight)
         {
             if ((position.X < 0 || position.X > screenWidth) || (position.Y < 0 || position.Y > screenHeight))
+            {
                 return true;
+            }
             else
                 return false;
         }
 
         public void Update(KeyboardState keystate, GameTime gameTime, GraphicsDevice graphicsDevice)
         {
-            if(fired)
+            if(active)
             {
-                if (keystate.IsKeyDown(Keys.B))
+
+                if (fired)
                 {
-                    enableBoundingBox = !enableBoundingBox;
+                    if (keystate.IsKeyDown(Keys.B))
+                    {
+                        enableBoundingBox = !enableBoundingBox;
+                    }
+
+                    if (OutOfBounds(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height) || collision)
+                    {
+                        Reset();
+                        collision = false;
+                        if (rounds < 1)
+                            active = false;
+                    }
+
+                    else
+                        position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
                 }
 
-                if (OutOfBounds(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height) || collision)
+                else //Not fired ... do the timer thing
                 {
-                    Reset();
-                    collision = false;
+                    timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (timer > 3)
+                    {
+                        fired = true;
+                        rounds--;
+                    }
                 }
 
-                else
-                    position = Vector2.Add(position, Vector2.Multiply(velocity, (float)gameTime.ElapsedGameTime.TotalSeconds));
-            }
-
-            else //Not fired ... do the timer thing
-            {
-                timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (timer > 2)
-                    fired = true;
             }
         }
 
