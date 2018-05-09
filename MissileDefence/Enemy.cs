@@ -60,14 +60,12 @@ namespace MissileDefence
         {
             if(active)
             {
-
+                if (keystate.IsKeyDown(Keys.B))
+                {
+                    enableBoundingBox = !enableBoundingBox;
+                }
                 if (fired)
                 {
-                    if (keystate.IsKeyDown(Keys.B))
-                    {
-                        enableBoundingBox = !enableBoundingBox;
-                    }
-
                     if (OutOfBounds(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height) || collision)
                     {
                         Reset();
